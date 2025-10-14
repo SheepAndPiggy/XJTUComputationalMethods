@@ -6,7 +6,7 @@
       "type": "shell",
       "command": "C:\\Program Files\\mingw64\\bin\\g++.exe",  // 使用 MinGW 编译器
       "args": [
-        "${file}",  // 源文件路径
+        "${workspaceFolder}/src/main.cpp",  // 源文件路径
         "${workspaceFolder}/chapters/*.cpp",
         "-o", "${workspaceFolder}/build/${fileBasenameNoExtension}.exe",  // 输出路径
         "-I", "${workspaceFolder}/include",  // 头文件路径

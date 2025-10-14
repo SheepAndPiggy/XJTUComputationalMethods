@@ -231,6 +231,20 @@ Matrix Matrix::sort(int* indexs, int axis) const{
 }
 
 /* 矩阵对象的工具函数 */
+double norm(const Matrix& mat){
+    double sum = 0;
+    if (mat.rows == 1){
+        for (int i = 0; i < mat.cols; ++i)
+            sum += std::pow(mat(0, i), 2);
+    } else if (mat.cols == 1){
+        for (int i = 0; i < mat.rows; ++i)
+            sum += std::pow(mat(i, 0), 2);
+    } else {
+        throw std::invalid_argument("求模长输入必须为向量！");
+    }
+    return std::sqrt(sum);
+}
+
 Matrix concat(const Matrix& mat_a, const Matrix& mat_b, int axis){
     size_t rows, cols;
     if (axis == 0){
@@ -242,8 +256,8 @@ Matrix concat(const Matrix& mat_a, const Matrix& mat_b, int axis){
         for (int j = 0; j < cols; ++j){
             for (int i = 0; i < mat_a.rows; ++i)
                 result(i, j) = mat_a(i, j);
-            for (int i = mat_a.rows; j < rows; ++i)
-                result(i, j) = mat_b(i, j);
+            for (int i = mat_a.rows; i < rows; ++i)
+                result(i, j) = mat_b(i - mat_a.rows, j);
         }
         return result;
     } else if (axis == 1){
@@ -256,7 +270,7 @@ Matrix concat(const Matrix& mat_a, const Matrix& mat_b, int axis){
             for (int j = 0; j < mat_a.cols; ++j)
                 result(i, j) = mat_a(i, j);
             for (int j = mat_a.cols; j < cols; ++j)
-                result(i, j) = mat_b(i, j);
+                result(i, j) = mat_b(i, j - mat_a.cols);
         }
         return result;
     } else {

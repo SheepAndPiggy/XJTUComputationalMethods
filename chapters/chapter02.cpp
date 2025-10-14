@@ -3,6 +3,7 @@
 #include "utils.hpp"
 #include <cstring>
 #include <chrono>
+#include <cmath>
 
 luResult::luResult(Matrix& LU_mat, Matrix& LU_P):
 LU_mat(LU_mat), LU_P(LU_P){}
@@ -158,6 +159,106 @@ Matrix ThomasSolver::thomasSolve(const Matrix& mat, const Matrix& b){
     return x;
 }
 
+QRResult::QRResult(const Matrix& Q, const Matrix& R): Q(Q), R(R){}
+
+Matrix RegularTransformer::givensMatrix(size_t n, size_t i, size_t j, double s, double c){
+    if (i >= j)
+        throw std::invalid_argument("吉文斯变换参数i必须小于j！");
+    Matrix givensMat(n, n, 0);
+    for (int i_ = 0; i_ < n; ++i_)
+        givensMat(i_, i_) = 1;
+    givensMat(i, i) = c;
+    givensMat(j, j) = c;
+    givensMat(i, j) = s;
+    givensMat(j, i) = -s;
+    return givensMat;
+}
+
+ QRResult RegularTransformer::givensQRDecompose(const Matrix& mat){
+    Matrix R = mat;
+    Matrix Q(R.rows, R.rows, 0);  // 初始化Q矩阵
+    for (int i = 0; i < R.rows; ++i)
+        Q(i, i) = 1;
+
+    for (int j = 0; j < R.cols; ++j){
+        double first_sum = std::pow(R(j, j), 2);
+
+        Matrix P_tot(R.rows - j, R.rows - j, 0);  // 初始化P矩阵
+        for (int i = 0; i < R.rows - j; ++i)
+            P_tot(i, i) = 1;
+
+        for (int i = j + 1; i < R.rows; ++i){
+            double first_sum_bak = first_sum;
+            first_sum += std::pow(R(i, j), 2);
+
+            double c = 0;
+            if (i == j + 1)  // 第一次计算时c和xjj符号有关
+                c = R(j, j) / std::sqrt(first_sum);
+            else
+                c = std::sqrt(first_sum_bak / first_sum);
+
+            double s = R(i, j) / std::sqrt(first_sum);
+            Matrix P = RegularTransformer::givensMatrix(R.rows - j, 0, i - j, s, c);
+            P_tot = P * P_tot;
+        }
+        
+        if (j != 0){
+            Matrix I(j, j);
+            for (int i = 0; i < j; ++i)
+                I(i, i) = 1;
+            Matrix Z(j, R.rows - j, 0);
+            Matrix P_tot_concat = concat(concat(I, Z, 1), concat(Z.transpose(), P_tot, 1), 0);
+            Q = P_tot_concat * Q;
+            R = P_tot_concat * R;
+        } else {
+            Q = P_tot * Q;
+            R = P_tot * R;
+        }
+    }
+
+    QRResult result(Q.transpose(), R);
+    return result;
+ }
+
+ QRResult RegularTransformer::householderQRDecompose(const Matrix& mat){
+    Matrix R = mat;
+    Matrix Q(R.rows, R.rows, 0);  // 初始化Q矩阵
+    for (int i = 0; i < R.rows; ++i)
+        Q(i, i) = 1;
+
+    for (int j = 0; j < R.cols; ++j){
+        double k = R(j, j) > 0 ? 1 : -1;
+        Matrix line(R.rows - j, 1);  // 列向量
+        for (int k = 0; k < R.rows - j; ++k)
+            line(k, 0) = R(k + j, j); 
+        double sigma = -k * norm(line);  // 计算sigma
+        Matrix e(R.rows - j, 1);  // 单位向量
+        e(0, 0) = 1;
+
+        Matrix u = (line - sigma * e) / norm(line - sigma * e);  // 计算u
+        Matrix I(R.rows - j, R.rows - j);  // 单位矩阵
+        for (int k = 0; k < R.rows - j; ++k)
+            I(k, k) = 1;
+        Matrix H_ = I - 2 * u * u.transpose();
+
+        if (j != 0){
+            Matrix E(j, j);
+            for (int k = 0; k < j; ++k)
+                E(k, k) = 1;
+            Matrix Z(j, R.rows - j, 0);
+            Matrix H = concat(concat(E, Z, 1), concat(Z.transpose(), H_, 1), 0);
+
+            Q = H * Q;
+            R = H * R;
+        } else{
+            Q = H_ * Q;
+            R = H_ * R;
+        }
+    }
+    QRResult result(Q.transpose(), R);
+    return result;
+ }
+
 
 void Demo1(){
     Matrix A(4, 4);
@@ -173,26 +274,20 @@ void Demo1(){
         {9.5342}, {6.3941}, {18.4231}, {16.9237}
     };
     
-    luResult result(A.rows, A.cols);
-    result = DoolittleSolver::luDecompose(A, true);  // 通过列主元的方法获取LU分解矩阵
+    luResult result = DoolittleSolver::luDecompose(A, true);  // 通过列主元的方法获取LU分解矩阵
 
     std::cout << "LU分解矩阵：" << std::endl;
     std::cout << result.LU_mat << std::endl << std::endl;
     std::cout << "置换矩阵P：" << std::endl;
     std::cout << result.LU_P << std::endl;
 
-    Matrix L(result.LU_mat.rows, result.LU_mat.cols);
-    Matrix U(result.LU_mat.rows, result.LU_mat.cols);
-    L = result.LU_mat.lower_tri();
-    U = result.LU_mat.upper_tri();
+    Matrix L = result.LU_mat.lower_tri();
+    Matrix U = result.LU_mat.upper_tri();
     for (int i = 0; i < L.rows; ++i)
         L(i, i) = 1;  // 将L矩阵的对角线元素置为1
-    
-    Matrix y(result.LU_mat.cols, b.cols);
-    Matrix x(result.LU_mat.cols, b.cols);
 
-    y = DoolittleSolver::solveByTri(L, result.LU_P * b, "low");  // 求解Ly = Pb
-    x = DoolittleSolver::solveByTri(U, y, "up");  // 求解Ux = y
+    Matrix y = DoolittleSolver::solveByTri(L, result.LU_P * b, "low");  // 求解Ly = Pb
+    Matrix x = DoolittleSolver::solveByTri(U, y, "up");  // 求解Ux = y
 
     x = result.LU_P.transpose() * x;  // 根据行置换矩阵P交换结果x，置换矩阵的逆是其转置矩阵
 
@@ -203,34 +298,25 @@ void Demo1(){
 void Demo11(size_t n){
     std::cout << "矩阵维度：" << n << std::endl;
 
-    Matrix A(n, n);
-    A = generatePositiveDefiniteMatrix(n);
+    Matrix A = generatePositiveDefiniteMatrix(n);
 
-    Matrix b(n, 1);
-    b = generateRandomMatrix(n, 1);
-    
-    luResult result(A.rows, A.cols);
+    Matrix b = generateRandomMatrix(n, 1);
     auto lu_start = std::chrono::high_resolution_clock::now();  // LU分解开始时间
-    result = DoolittleSolver::luDecompose(A, true);  // 通过列主元的方法获取LU分解矩阵
+    luResult result = DoolittleSolver::luDecompose(A, true);  // 通过列主元的方法获取LU分解矩阵
     auto lu_end = std::chrono::high_resolution_clock::now();  // LU分解结束时间
     auto lu_duration_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(lu_end - lu_start).count();
 
     std::cout << "LU分解用时（s）：" << std::endl;
     std::cout << lu_duration_ns / 1e9 << std::endl;  // 转换成秒
 
-    Matrix L(result.LU_mat.rows, result.LU_mat.cols);
-    Matrix U(result.LU_mat.rows, result.LU_mat.cols);
-    L = result.LU_mat.lower_tri();
-    U = result.LU_mat.upper_tri();
+    Matrix L = result.LU_mat.lower_tri();
+    Matrix U = result.LU_mat.upper_tri();
     for (int i = 0; i < L.rows; ++i)
         L(i, i) = 1;  // 将L矩阵的对角线元素置为1
-    
-    Matrix y(result.LU_mat.cols, b.cols);
-    Matrix x(result.LU_mat.cols, b.cols);
 
     auto gauss_start = std::chrono::high_resolution_clock::now();  // 求解方程组开始时间
-    y = DoolittleSolver::solveByTri(L, result.LU_P * b, "low");  // 求解Ly = Pb
-    x = DoolittleSolver::solveByTri(U, y, "up");  // 求解Ux = y
+    Matrix y = DoolittleSolver::solveByTri(L, result.LU_P * b, "low");  // 求解Ly = Pb
+    Matrix x = DoolittleSolver::solveByTri(U, y, "up");  // 求解Ux = y
     auto gauss_end = std::chrono::high_resolution_clock::now();  // 求解方程组结束时间
     auto gauss_duration_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(gauss_end - gauss_start).count();
     std::cout << "LU分解法方程组求解用时（s）：" << std::endl;
@@ -245,14 +331,12 @@ void Demo2(){
             A(i, j) = (i == j) ? i + 1 : std::min(i, j) + 1;
     }
 
-    Matrix G(A.rows, A.cols);
-    G = SqrtMethodSolver::choleskyDecompose(A);
+    Matrix G = SqrtMethodSolver::choleskyDecompose(A);
 
     std::cout << "楚列斯基分解矩阵G：" << std::endl;
     std::cout << G << std::endl;
 
-    Matrix LD(A.rows, A.cols);
-    LD = SqrtMethodSolver::improvedSqrtDecompose(A);
+    Matrix LD = SqrtMethodSolver::improvedSqrtDecompose(A);
 
     std::cout << "改进平方根法分解矩阵LU：" << std::endl;
     std::cout << LD << std::endl;
@@ -261,13 +345,11 @@ void Demo2(){
 void Demo21(size_t n){
         std::cout << "矩阵维度：" << n << std::endl;
 
-    Matrix A(n, n);
-    A = generatePositiveDefiniteMatrix(n);
+    Matrix A = generatePositiveDefiniteMatrix(n);
     
     /* LU分解 */
-    luResult lu_result(A.rows, A.cols);
     auto lu_start = std::chrono::high_resolution_clock::now();  // LU分解开始时间
-    lu_result = DoolittleSolver::luDecompose(A, true);  // 通过列主元的方法获取LU分解矩阵
+    luResult lu_result = DoolittleSolver::luDecompose(A, true);  // 通过列主元的方法获取LU分解矩阵
     auto lu_end = std::chrono::high_resolution_clock::now();  // LU分解结束时间
     auto lu_duration_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(lu_end - lu_start).count();
 
@@ -275,9 +357,8 @@ void Demo21(size_t n){
     std::cout << lu_duration_ns / 1e9 << std::endl;  // 转换成秒
 
     /* 楚列斯基分解 */
-    Matrix cholesky_result(A.rows, A.cols);
     auto cholesky_start = std::chrono::high_resolution_clock::now();
-    cholesky_result = SqrtMethodSolver::choleskyDecompose(A);
+    Matrix cholesky_result = SqrtMethodSolver::choleskyDecompose(A);
     auto cholesky_end = std::chrono::high_resolution_clock::now();
     auto cholesky_duration_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(cholesky_end - cholesky_start).count();
 
@@ -285,9 +366,8 @@ void Demo21(size_t n){
     std::cout << cholesky_duration_ns / 1e9 << std::endl;
 
     /* 改进平方根法分解 */
-    Matrix sqrt_result(A.rows, A.cols);
     auto sqrt_start = std::chrono::high_resolution_clock::now();
-    sqrt_result = SqrtMethodSolver::improvedSqrtDecompose(A);
+    Matrix sqrt_result = SqrtMethodSolver::improvedSqrtDecompose(A);
     auto sqrt_end = std::chrono::high_resolution_clock::now();
     auto sqrt_duration_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(sqrt_end - sqrt_start).count();
 
@@ -309,9 +389,66 @@ void Demo3(){
             A(i, i + 1) = -1;
     }
 
-    Matrix x(A.cols, 1);
-    x = ThomasSolver::thomasSolve(A, b);
+    Matrix x = ThomasSolver::thomasSolve(A, b);
 
     std::cout << "三对角矩阵追赶法求解结果：" << std::endl;
+    std::cout << x.transpose() << std::endl;
+}
+
+void Demo4(){
+    Matrix A(7, 7);
+    Matrix b(7, 1);
+
+    A = {
+        {5, 4, 7, 5, 6, 7, 5}, 
+        {4, 12, 8, 7, 8, 8, 6}, 
+        {7, 8, 10, 9, 8, 7, 7}, 
+        {5, 7, 9, 11, 9, 7, 5}, 
+        {6, 8, 8, 9, 10, 8, 9}, 
+        {7, 8, 7, 7, 8, 10, 10}, 
+        {5, 6, 7, 5, 9, 10, 10}
+    };
+    b = {{39}, {53}, {56}, {53}, {58}, {57}, {52}};
+
+    QRResult result = RegularTransformer::householderQRDecompose(A);
+    Matrix y = result.Q.transpose() * b;
+    Matrix x = DoolittleSolver::solveByTri(result.R, y, "up");
+
+    std::cout << "利用豪斯霍尔德变换进行QR分解结果：" << std::endl;
+    std::cout << "Q矩阵：" << std::endl;
+    std::cout << result.Q << std::endl;
+    std::cout << "R矩阵：" << std::endl;
+    std::cout << result.R << std::endl;
+
+    std::cout << "求解结果：" << std::endl;
+    std::cout << x.transpose() << std::endl;
+}
+
+void Demo41(){
+    Matrix A(7, 7);
+    Matrix b(7, 1);
+
+    A = {
+        {5, 4, 7, 5, 6, 7, 5}, 
+        {4, 12, 8, 7, 8, 8, 6}, 
+        {7, 8, 10, 9, 8, 7, 7}, 
+        {5, 7, 9, 11, 9, 7, 5}, 
+        {6, 8, 8, 9, 10, 8, 9}, 
+        {7, 8, 7, 7, 8, 10, 10}, 
+        {5, 6, 7, 5, 9, 10, 10}
+    };
+    b = {{39}, {53}, {56}, {53}, {58}, {57}, {52}};
+
+    QRResult result = RegularTransformer::givensQRDecompose(A);
+    Matrix y = result.Q.transpose() * b;
+    Matrix x = DoolittleSolver::solveByTri(result.R, y, "up");
+
+    std::cout << "利用吉文斯变换进行QR分解结果：" << std::endl;
+    std::cout << "Q矩阵：" << std::endl;
+    std::cout << result.Q << std::endl;
+    std::cout << "R矩阵：" << std::endl;
+    std::cout << result.R << std::endl;
+
+    std::cout << "求解结果：" << std::endl;
     std::cout << x.transpose() << std::endl;
 }

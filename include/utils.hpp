@@ -136,6 +136,7 @@ Matrix operator* (const double& x, const Matrix& mat);
 Matrix operator/ (const double& x, const Matrix& mat);
 
 /* 矩阵对象的工具函数 */
+double norm(const Matrix& mat);  // 计算向量的模长
 Matrix concat(const Matrix& mat_a, const Matrix& mat_b, int axis = 0);  // 沿行或者列拼接矩阵
 Matrix generateRandomMatrix(size_t n, size_t m, double min_val = -10.0, double max_val = 10.0);  // 生成指定维度的非奇异随机方阵
 Matrix generatePositiveDefiniteMatrix(size_t n);  // 生成随机正定矩阵，利用B^T * B为正定矩阵的性质(B可逆)
