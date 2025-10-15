@@ -1,8 +1,3 @@
-<script type="text/javascript" async
-  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
-</script>
-
-
 # 🚀 XJTU计算方法课程C++代码库
 
 ## ✨ 作者
@@ -34,9 +29,7 @@
 
 ```json
 {
-    ... : ...,
-    "miDebuggerPath": "C:\\Program Files\\mingw64\\bin\\gdb.exe", // 调试器可执行文件改为自己电脑上的路径
-    ... : ...
+    "miDebuggerPath": "C:\\Program Files\\mingw64\\bin\\gdb.exe", 
 }
 ```
 
@@ -45,9 +38,7 @@
 
 ```json
 {
-    ... : ...,
-    "command": "C:\\Program Files\\mingw64\\bin\\g++.exe", // 编译器可执行文件改为自己电脑上的路径 
-    ... : ...
+    "command": "C:\\Program Files\\mingw64\\bin\\g++.exe", 
 }
 ```
 
@@ -115,7 +106,7 @@ R矩阵：
 > 本章节实现了列主元LU分解法、平方根法、改进平方根法、三对角矩阵追赶法、基于吉文斯变换的QR分解、基于豪斯霍尔德变换的QR分解
 
 #### 1. 列主元LU分解法
-LU分解的过程和高斯消去法相同，其优势在于如果需要计算多个方程组$Ax=B$，则LU分解将分解矩阵L和U保存后可以避免重复计算；此外，进行高斯消去法时常常会将列中绝对值最大的行置于主元的位置，这相当于对A左乘一个置换矩阵$P$，因此求解方程$Ax=b$变为
+LU分解的过程和高斯消去法相同，其优势在于如果需要计算多个方程组 ![$Ax=B$](https://latex.codecogs.com/png.latex?A%5Cmathbf%7Bx%7D%3D%5Cmathbf%7Bb%7D) ，则LU分解将分解矩阵L和U保存后可以避免重复计算；此外，进行高斯消去法时常常会将列中绝对值最大的行置于主元的位置，这相当于对A左乘一个置换矩阵$P$，因此求解方程$Ax=b$变为
 
 $$
 \begin{aligned}
