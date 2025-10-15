@@ -1,3 +1,8 @@
+<script type="text/javascript" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+
+
 # 🚀 XJTU计算方法课程C++代码库
 
 ## ✨ 作者
