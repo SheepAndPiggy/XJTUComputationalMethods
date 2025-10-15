@@ -134,7 +134,8 @@ Matrix SqrtMethodSolver::improvedSqrtDecompose(const Matrix& mat){
             for (int k = 0; k < i; ++k){
                 temp += result(i, k) * result(k, j);
             }
-            result(j, i) = (mat(i, j) - temp) / result(i, i);
+            result(i, j) = mat(i, j) - temp;
+            result(j, i) = result(i, j) / result(i, i);
         }
     }
     return result;
@@ -336,10 +337,10 @@ void Demo2(){
     std::cout << "楚列斯基分解矩阵G：" << std::endl;
     std::cout << G << std::endl;
 
-    Matrix LD = SqrtMethodSolver::improvedSqrtDecompose(A);
+    Matrix LU = SqrtMethodSolver::improvedSqrtDecompose(A);
 
     std::cout << "改进平方根法分解矩阵LU：" << std::endl;
-    std::cout << LD << std::endl;
+    std::cout << LU << std::endl;
 }
 
 void Demo21(size_t n){

@@ -29,7 +29,7 @@ class SqrtMethodSolver{
     // 楚列斯基分解，返回分解后的矩阵G
     static Matrix choleskyDecompose(const Matrix& mat);
 
-    // 改进平方根法，返回分解后的矩阵LD
+    // 改进平方根法，返回分解后的矩阵LU
     static Matrix improvedSqrtDecompose(const Matrix& mat);
 };
 
