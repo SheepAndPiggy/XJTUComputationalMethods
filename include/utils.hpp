@@ -19,8 +19,12 @@ class Matrix{
     size_t rows;  // 行数
     size_t cols;  // 列数
 
+    // 矩阵的默认构造函数，构造未初始化的矩阵
+    Matrix();
+
     // 矩阵构造函数
     Matrix(size_t rows, size_t cols, double default_value = 0.0);
+    Matrix(std::initializer_list<std::initializer_list<double>> init);
 
     // 索引矩阵元素
     double& operator()(unsigned int r, unsigned int c);
@@ -87,6 +91,9 @@ class Matrix{
         return result;
     }
 
+    // 矩阵间的除法
+    Matrix operator/ (const Matrix& other) const;
+
     // 矩阵与常数的除法
     template <typename T>
     typename std::enable_if<
@@ -124,6 +131,9 @@ class Matrix{
 
     // 矩阵根据索引交换行或列
     Matrix sort(int* indexs, int axis) const;
+
+    // 根据高斯约当消去法求矩阵的逆
+    Matrix inv() const;
 
     private:
     std::vector<double> data;

@@ -52,13 +52,15 @@
 
 ```cpp
 // 测试用例
-void Demo1();  // 计算实习2.1
-void Demo11(size_t n = 1000);  // 测试LU分解分解正定矩阵和求解的性能
-void Demo2();  // 计算实习2.2
-void Demo21(size_t n = 1000);  // 比较LU分解、楚列斯基分解、改进平方根法的计算速度
-void Demo3();  // 计算实习2.3
-void Demo4();  // 计算实习2.4
-void Demo41();  // 使用吉文斯变换进行QR分解，计算计算实习2.4
+struct Chapter02Demos{
+    static void Demo1();  // 计算实习2.1
+    static void Demo11(size_t n = 1000);  // 测试LU分解分解正定矩阵和求解的性能
+    static void Demo2();  // 计算实习2.2
+    static void Demo21(size_t n = 1000);  // 比较LU分解、楚列斯基分解、改进平方根法的计算速度
+    static void Demo3();  // 计算实习2.3
+    static void Demo4();  // 计算实习2.4
+    static void Demo41();  // 使用吉文斯变换进行QR分解，计算计算实习2.4
+};
 ```
 
 在主文件中运行测试样例4
@@ -69,7 +71,7 @@ void Demo41();  // 使用吉文斯变换进行QR分解，计算计算实习2.4
 ```cpp
 int main(){
     SetConsoleOutputCP(CP_UTF8);  // 强制控制台使用utf-8编码
-    Demo4();
+    Chapter02Demos::Demo4();
     return 0;
 }
 ```
@@ -341,7 +343,7 @@ $$
 吉文斯变换通过构造矩阵 $P_{1j}$ 不断消去矩阵每列的第j个元素，将矩阵化为上阶梯矩阵，其中构造的参数 $s$ 和 $c$ 要求
 
 $$
-c = \frac{x_1}{\sqrt{x_1^2 + x_j^2}} \\
+c = \frac{x_1}{\sqrt{x_1^2 + x_j^2}} \quad
 s = \frac{x_j}{\sqrt{x_1^2 + x_j^2}}
 $$
 
@@ -350,7 +352,7 @@ $$
 豪斯霍尔德变换通过构造变换矩阵 $H = I - 2uu^T$ ，可证明存在 $Hx=\sigma v$ ，其中 $v$ 为单位向量，只需满足
 
 $$
-\sigma = \pm \|x\|_2 \\
+\sigma = \pm \|x\|_2 \quad
 u = \frac{x - \sigma v}{\|x - \sigma v \|_2}
 $$
 
@@ -429,3 +431,75 @@ R矩阵：
 ```
 
 ### Chapter03 解线性方程组的迭代法
+#### 1. 雅可比迭代、高斯赛德尔迭代和超松弛迭代
+
+三种迭代方法可写为通用迭代格式
+
+$$
+x_{k+1} = Bx_k + g
+$$
+
+对于雅可比迭代，有：
+
+$$
+B = D^{-1}(E+F),\quad g = D^{-1}b
+$$
+
+对于超松弛迭代，有：
+
+$$
+B = (D-\omega E)^{-1}[(1-\omega)D+\omega F],\quad g = \omega(D-\omega E)^{-1}b
+$$
+
+对于高斯赛德尔迭代，为超松弛迭代 $\omega=1$ 时的特例
+
+当迭代收敛，意味着相邻两步步长差距不大，采取变化量和上一步 $x$ 比值的模长可以得到收敛判据
+
+$$
+\left\|\frac{x_{k+1} - x_k }{x_k}\right\| \le \epsilon
+$$
+
+该判据由函数`convergenceError`实现
+
+```cpp
+double IterationSolver::convergenceError(const Matrix& x_old, const Matrix& x_new){
+    double error = norm((x_new - x_old) / x_old);  // 相对误差
+    return error;
+}
+```
+
+当求解成功，意味着方程组残差 $Ax_k-b$ 足够小，因此可以通过判断残差的模长与 $x$ 模长的比值大小判断是否求解成功
+
+$$
+\frac{\| Ax_k - b \|}{\|x_k\|} \le \epsilon
+$$
+
+该判据由函数`residualNormError`实现
+
+```cpp
+double IterationSolver::residualNormError(const Matrix& x){
+    double error = norm(A * x - b);
+    return error;
+}
+```
+
+##### 题目：计算实习3.1
+用雅可比迭代法和高斯赛德尔迭代法求解方程
+
+$$
+A = \begin{bmatrix}
+2.52 & 0.95 & 1.25 & -0.85 \\
+0.39 & 1.69 & -0.45 & 0.49 \\
+0.55 & -1.25 & 1.96 & -0.98 \\
+0.23 & -1.15 & -0.45 & 2.31
+\end{bmatrix}, \quad
+
+b = \begin{bmatrix}
+1.38 \\
+-0.34 \\
+0.67 \\
+1.52
+\end{bmatrix}
+$$
+
+使误差小于 $10^{-3}$ ，并比较迭代次数 

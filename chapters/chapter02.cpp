@@ -261,7 +261,7 @@ Matrix RegularTransformer::givensMatrix(size_t n, size_t i, size_t j, double s, 
  }
 
 
-void Demo1(){
+void Chapter02Demos::Demo1(){
     Matrix A(4, 4);
     A = {
         {1.1348, 3.8326, 1.1651, 3.4017}, 
@@ -296,7 +296,7 @@ void Demo1(){
     std::cout << x.transpose() << std::endl << std::endl;
 }
 
-void Demo11(size_t n){
+void Chapter02Demos::Demo11(size_t n){
     std::cout << "矩阵维度：" << n << std::endl;
 
     Matrix A = generatePositiveDefiniteMatrix(n);
@@ -325,7 +325,7 @@ void Demo11(size_t n){
     std::cout << std::endl;
 }
 
-void Demo2(){
+void Chapter02Demos::Demo2(){
     Matrix A(20, 20);
     for (int i = 0; i < A.rows; ++i){  // 初始化矩阵A
         for (int j = 0; j < A.cols; ++j)
@@ -343,7 +343,7 @@ void Demo2(){
     std::cout << LU << std::endl;
 }
 
-void Demo21(size_t n){
+void Chapter02Demos::Demo21(size_t n){
         std::cout << "矩阵维度：" << n << std::endl;
 
     Matrix A = generatePositiveDefiniteMatrix(n);
@@ -376,7 +376,7 @@ void Demo21(size_t n){
     std::cout << sqrt_duration_ns / 1e9 << std::endl;
 }
 
-void Demo3(){
+void Chapter02Demos::Demo3(){
     Matrix A(20, 20, 0);
     Matrix b(20, 1, 2);
 
@@ -396,7 +396,7 @@ void Demo3(){
     std::cout << x.transpose() << std::endl;
 }
 
-void Demo4(){
+void Chapter02Demos::Demo4(){
     Matrix A(7, 7);
     Matrix b(7, 1);
 
@@ -425,7 +425,7 @@ void Demo4(){
     std::cout << x.transpose() << std::endl;
 }
 
-void Demo41(){
+void Chapter02Demos::Demo41(){
     Matrix A(7, 7);
     Matrix b(7, 1);
 

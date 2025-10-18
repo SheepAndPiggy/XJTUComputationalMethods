@@ -47,11 +47,29 @@ void Node::print(){
 
 
 /* 矩阵（一维vector模拟二维矩阵） */
+Matrix::Matrix(): rows(-1), cols(-1), data(std::vector<double>()){}
+
 Matrix::Matrix(size_t rows, size_t cols, double default_value):  // 默认参数只能在类定义的时候传入一次
     rows(rows),
     cols(cols),
     data(rows * cols, default_value)
     {}
+
+Matrix::Matrix(std::initializer_list<std::initializer_list<double>> init):
+rows(-1), cols(-1), data(std::vector<double>()){
+    int i = 0;
+    int j = 0;
+    for (const auto& row : init) {  // 遍历外层初始化列表（行）
+        j = 0;
+        for (double val : row) {  // 遍历内层初始化列表（列）
+            this->data.push_back(val);  // 赋值到 data
+            j++;
+        }
+        i++;
+    }
+    this->rows = i;
+    this->cols = j;
+}
 
 double& Matrix::operator()(unsigned int r, unsigned int c){
     if ((r + 1) > rows || (c + 1) > cols)
@@ -142,9 +160,28 @@ Matrix Matrix::operator* (const Matrix& other) const{
     return result;
 }
 
+Matrix Matrix::operator/ (const Matrix& other) const{
+    if (rows != other.rows || cols != other.cols)
+        throw std::invalid_argument("矩阵间除法维度不匹配！");
+    Matrix result(rows, cols);
+    for (int i = 0; i < rows; ++i)
+        for (int j = 0; j < cols; ++j){
+            if (std::abs(other(i, j)) < 1e-12)
+                throw std::domain_error("矩阵含有零元素，无法作为除数！");
+            result(i, j) = (*this)(i, j) / other(i, j);
+        }
+    return result;
+}
+
 Matrix& Matrix::operator= (const Matrix& other){
     if (this == &other)
         return *this;
+    if (this->rows == -1 && this->cols == -1){  // 如果矩阵没有经过初始化
+        this->rows = other.rows;
+        this->cols = other.cols;
+        this->data = other.data;  // 直接复制所有的值
+        return *this;
+    }
     if (this->rows != other.rows || this->cols != other.cols)
         throw std::invalid_argument("赋值符号'='两侧矩阵大小不一致！");
     std::copy(other.data.begin(), other.data.end(), this->data.begin());
@@ -228,6 +265,37 @@ Matrix Matrix::sort(int* indexs, int axis) const{
         throw std::invalid_argument("axis参数只能为0(行方向)和1(列方向)！");
     }
     return result;
+}
+
+Matrix Matrix::inv() const{
+    if (rows != cols)
+        throw std::invalid_argument("求逆的矩阵必须为方阵！");
+    
+    Matrix I(rows, cols);
+    for (int i = 0; i < rows; ++i)
+        I(i, i) = 1;
+    
+    Matrix GY_mat = concat(*this, I, 1);
+
+    for (int i = 0; i < rows; ++i){
+        double q = GY_mat(i, i);
+        for (int k = i; k < GY_mat.cols; ++k)
+            GY_mat(i, k) /= q;
+
+        for (int j = 0; j < rows; ++j){
+            if (j == i)
+                continue;
+            double l = -GY_mat(j, i);
+            for (int k = i; k < GY_mat.cols; ++k)
+                GY_mat(j, k) += l * GY_mat(i, k);
+        }
+    }
+
+    Matrix inv_mat(rows, cols);
+    for (int i = 0; i < rows; ++i)
+        for(int j = 0; j < cols; ++j)
+            inv_mat(i, j) = GY_mat(i, j + cols);
+    return inv_mat;
 }
 
 /* 矩阵对象的工具函数 */

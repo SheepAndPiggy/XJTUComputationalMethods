@@ -59,10 +59,12 @@ class RegularTransformer{
 };
 
 // 测试用例
-void Demo1();  // 计算实习2.1
-void Demo11(size_t n = 1000);  // 测试LU分解分解正定矩阵和求解的性能
-void Demo2();  // 计算实习2.2
-void Demo21(size_t n = 1000);  // 比较LU分解、楚列斯基分解、改进平方根法的计算速度
-void Demo3();  // 计算实习2.3
-void Demo4();  // 计算实习2.4
-void Demo41();  // 使用吉文斯变换进行QR分解，计算计算实习2.4
+struct Chapter02Demos{
+    static void Demo1();  // 计算实习2.1
+    static void Demo11(size_t n = 1000);  // 测试LU分解分解正定矩阵和求解的性能
+    static void Demo2();  // 计算实习2.2
+    static void Demo21(size_t n = 1000);  // 比较LU分解、楚列斯基分解、改进平方根法的计算速度
+    static void Demo3();  // 计算实习2.3
+    static void Demo4();  // 计算实习2.4
+    static void Demo41();  // 使用吉文斯变换进行QR分解，计算计算实习2.4
+};
