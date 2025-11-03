@@ -64,6 +64,34 @@ double IterationSolver::residualNormError(const Matrix& x){
     return error;
 }
 
+Matrix IterationSolver::ConjugateGradientSolve(){
+    Matrix x = generateRandomMatrix(A.cols, 1, -1, 1);
+
+    Matrix r = b - A * x;
+    Matrix d = r;
+    double beta;
+
+    for (int i = 0; i < max_iter; ++i){
+        double final_error = this->residualNormError(x) / norm(x);
+        // std::cout << "第" << i + 1 << "步" << "残差||Ax-b||/||x||：" << std::endl;
+        // std::cout << final_error << std::endl;
+        if (final_error < epsilon){
+            std::cout << "维度为" << A.cols << "的共轭梯度法过程共用" << i + 1 << "步, "
+             << "残差||Ax-b||/||x||为" << final_error << std::endl;
+            break;
+        }
+        double alpha = (r.transpose() * d)(0, 0) / 
+        (d.transpose() * A * d)(0, 0);
+        x = x + alpha * d;
+        r = b - A * x;
+        beta = -(r.transpose() * A * d)(0, 0) / 
+        (d.transpose() * A * d)(0, 0);
+        d = r + beta * d;
+    }
+    return x;
+}
+
+
 void Chapter03Demos::Demo1(){
     Matrix A = {
         {2.52, 0.95, 1.25, -0.85}, 
@@ -77,4 +105,24 @@ void Chapter03Demos::Demo1(){
 
     std::cout << solver.jacobiSolve().transpose() << std::endl;;
     std::cout << solver.gaussSolve().transpose() << std::endl;
+}
+
+void Chapter03Demos::Demo2(){
+    int ns[3] = {100, 200, 400};
+
+    for (int n: ns){
+        Matrix A(n, n, 0);
+        Matrix b(n, 1, 0);
+        for (int i = 0; i < n; ++i){
+            int j_start = (i > 0) ? (i - 1) : 0;
+            int j_end   = (i < n - 1) ? (i + 1) : i;
+            for (int j = j_start; j <= j_end; ++j)
+                A(i, j) = (i == j) ? -2 : 1;
+        }
+        b(0, 0) = -1;
+        b(n - 1, 0) = -1;
+        
+        IterationSolver solver(A, b, 10000, 1e-3);
+        Matrix result = solver.ConjugateGradientSolve();
+    }
 }

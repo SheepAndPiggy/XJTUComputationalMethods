@@ -13,6 +13,9 @@ class IterationSolver{
     Matrix SORSolve(double w);
     Matrix gaussSolve();
 
+    // 共轭梯度法
+    Matrix ConjugateGradientSolve();
+
     // 误差函数
     double convergenceError(const Matrix& x_old, const Matrix& x_new);
     double residualNormError(const Matrix& x);
@@ -30,4 +33,5 @@ class IterationSolver{
 // 测试用例
 struct Chapter03Demos{
     static void Demo1();
+    static void Demo2();
 };
