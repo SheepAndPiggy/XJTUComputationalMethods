@@ -579,3 +579,49 @@ $$
 ```
 
 可以看到，残差均收敛达到标准（ $<10^{-3}$ ），且步数均小于矩阵维度n。
+
+#### 3. 基于伽辽金原理的迭代法
+1. 伽辽金原理的数学含义
+
+设 $A \in R^{n \times n}$ ， $V = \{v_1,v_2,\cdots,v_m\}$ 为 $R^n$ 中的m维子空间，由于
+
+$$
+\nabla (\frac{1}{2}x^TAx - b^Tx) = Ax - b
+$$
+
+因此求解线性方程组的问题等价为求解 $F(x)=\frac{1}{2}x^TAx - b^Tx$ 的极小值，对于真解 $x^*$ 和近似解 $x$ ，可以近似认为
+
+$$
+x^* = \arg\min\limits_{x \in R^n}F(x) \\
+e = x^* - x
+$$
+
+因此寻找最优的 $x$ 等价为使得误差 $e$ 最小，而越小的误差e意味着 $F(x)$ 和 $F(x^*)$ 的差值越小，因此问题等价为
+
+$$
+\arg \min\limits_{x \in R^n} F(x) - F(x^*) \\
+F(x) - F(x^*) = \frac{1}{2}x^TAx - b^Tx - \frac{1}{2}x^{*\top}Ax^* + b^Tx^* \\
+\text{since}~~b = Ax^* \\
+F(x) - F(x^*) = \frac{1}{2}e^TAe \propto \| e \|_A
+$$
+
+如果近似解 $x \in V$ ，则问题可以进一步简化为使残差 $r=A(x^* - x)$ 正交于 $V$ 的所有基
+
+$$
+\text{def}~~ \phi(x) = \| x^* - x \|_A = (x^* - x)^TA(x^* - x) \\
+\text{since}~~ \frac{d\phi(x+tv)}{dt} = -(x^* - x)^TAv = -r^Tv.\quad \forall v \in V \\
+\text{that}~~ \arg\min\limits_{x\in V}\phi (x) \iff r^Tv_i=0.\quad \forall v_i \in B,\quad V = spanB
+$$
+
+2. 思考：共轭梯度法与伽辽金原理的联系
+
+本质上，共轭梯度法也是基于伽辽金原理的原理型方法，不同于一般基于伽辽金原理的算法——例如阿诺尔迪过程需要求解上海森伯格矩阵组成的线性方程组(维度为 $m\times m$ )，共轭梯度法通过构造一组共轭向量 $d_i, d_i\in V_k$ ，通过三项递推公式使得 $r_k \perp V_k$ ，通过不断迭代更新 $V_k$ 求解，其中 $r_k,d_k \in V_{k+1}$ 可以通过数学归纳法证明
+
+$$
+d_0=r_0 \in V_1 = \{r_0\} \\
+\text{if} ~~ d_k,r_k \in V_{k+1} \\
+\text{then}~~ r_{k+1} = b - Ax_{k+1} = r_k - A\alpha_k d_k \in V_{k+2}\\
+d_{k+1} = r_{k+1} + \beta_k d_k \in V_{k+2}.
+$$
+
+因此本质上，共轭梯度法为基于伽辽金原理的方法，二者具有共性。
