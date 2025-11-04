@@ -600,6 +600,7 @@ $$
 
 因此寻找最优的 $x$ 等价为使得误差 $e$ 最小，而越小的误差e意味着 $F(x)$ 和 $F(x^*)$ 的差值越小，因此问题等价为
 
+
 $$
 \begin{aligned}
 \arg \min\limits_{x \in R^n} F(x) &- F(x^*) \\
@@ -608,6 +609,7 @@ F(x) - F(x^*) &= \frac{1}{2}x^TAx - b^Tx - \frac{1}{2}x^{* \top}Ax^* + b^T x^* \
 F(x) - F(x^*) &= \frac{1}{2}e^TAe \propto \| e \|_A
 \end{aligned}
 $$
+
 
 如果近似解 $x \in V$ ，则问题可以进一步简化为使残差 $r=A(x^* - x)$ 正交于 $V$ 的所有基
 
