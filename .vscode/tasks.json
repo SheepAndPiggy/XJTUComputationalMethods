@@ -8,7 +8,7 @@
       "args": [
         "${workspaceFolder}/src/main.cpp",  // 源文件路径
         "${workspaceFolder}/chapters/*.cpp",
-        "-o", "${workspaceFolder}/build/${fileBasenameNoExtension}.exe",  // 输出路径
+        "-o", "${workspaceFolder}/build/main.exe",  // 输出路径
         "-I", "${workspaceFolder}/include",  // 头文件路径
         "-g3",
         "-O0",
@@ -22,7 +22,7 @@
     {
       "label": "Run",
       "type": "shell",
-      "command": "${workspaceFolder}/build/${fileBasenameNoExtension}.exe",
+      "command": "${workspaceFolder}/build/main.exe",
       "group": "test",
       "problemMatcher": []
     },

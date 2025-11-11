@@ -1,5 +1,6 @@
 #pragma once
 #include "utils.hpp"
+#include "chapter02.hpp"
 
 class IterationSolver{
     public:
@@ -15,6 +16,9 @@ class IterationSolver{
 
     // 共轭梯度法
     Matrix ConjugateGradientSolve();
+
+    // 阿诺尔迪迭代法(循环型)
+    Matrix ArnoldiSolve(int m = 10);
 
     // 误差函数
     double convergenceError(const Matrix& x_old, const Matrix& x_new);
@@ -34,4 +38,5 @@ class IterationSolver{
 struct Chapter03Demos{
     static void Demo1();
     static void Demo2();
+    static void Demo3(int m);
 };

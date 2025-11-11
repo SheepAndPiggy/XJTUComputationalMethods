@@ -1,5 +1,6 @@
 #include "utils.hpp"
 #include "chapter03.hpp"
+#include "chapter02.hpp"
 
 IterationSolver::IterationSolver(const Matrix& A, const Matrix& b, unsigned int max_iter, double epsilon):
  A(A), b(b), max_iter(max_iter), epsilon(epsilon){
@@ -91,6 +92,62 @@ Matrix IterationSolver::ConjugateGradientSolve(){
     return x;
 }
 
+Matrix IterationSolver::ArnoldiSolve(int m){
+    if (m > A.rows)
+        m = A.rows / 2;
+
+    Matrix x = generateRandomMatrix(A.cols, 1, -1, 1);
+    Matrix r = b - A * x;
+    std::cout << "循环型阿诺尔迪算法开始！矩阵维度为: " << A.rows <<std::endl;
+    std::cout << "初始残差为" << norm(r) << std::endl;
+    
+    int step = 1;
+    while (norm(r) > epsilon){
+        Matrix H(m, m, 0);
+        Matrix v[m];
+        Matrix beta(m, 1, 0);
+        beta(0, 0) = norm(r);
+        v[0] = r / norm(r);  // 初始化v0
+
+        // 构造上海森伯格矩阵Hm
+        for (int j = 0; j < m; ++j){
+            for (int i = 0; i <= j; ++i)
+                H(i, j) = (v[i].transpose() * A * v[j])(0, 0);
+            
+            if (j < m - 1){
+                v[j + 1] = A * v[j];
+                for (int k = 0; k <= j; ++k)
+                    v[j + 1] = v[j + 1] - H(k, j) * v[k];
+
+                H(j + 1, j) = norm(v[j + 1]);
+                v[j + 1] = v[j + 1] / H(j + 1, j);
+            }
+        }
+
+        // 利用列主元高斯消去法求解Hy=beta
+        luResult result = DoolittleSolver::luDecompose(H, true);
+        Matrix L = result.LU_mat.lower_tri();
+        Matrix U = result.LU_mat.upper_tri();
+        for (int i = 0; i < L.rows; ++i)
+            L(i, i) = 1;  // 将L矩阵的对角线元素置为1
+            Matrix y_ = DoolittleSolver::solveByTri(L, result.LU_P * beta, "low");  // 求解Ly_ = Pbeta
+        Matrix y = DoolittleSolver::solveByTri(U, y_, "up");  // 求解Uy = y_
+
+        Matrix V(A.rows, m, 0);
+        for (int i = 0; i < V.rows; ++i)
+            for (int j = 0; j < V.cols; ++j)
+                V(i, j) = v[j](i, 0);
+        Matrix z = V * y;
+
+        x = x + z;
+        r = b - A * x;
+
+        std::cout << "第" << step << "步残差为" << norm(r) << std::endl;
+        step += 1;
+    }
+    return x;
+}
+
 
 void Chapter03Demos::Demo1(){
     Matrix A = {
@@ -125,4 +182,63 @@ void Chapter03Demos::Demo2(){
         IterationSolver solver(A, b, 10000, 1e-3);
         Matrix result = solver.ConjugateGradientSolve();
     }
+}
+
+void Chapter03Demos::Demo3(int m){
+    double delta = 1e-3;
+    Matrix B(10, 10, 0);
+    for (int i = 0; i < 10; ++i){
+        if (i == 0)
+            B(i, i + 1) = -1 + delta;
+        else if (i == 9)
+            B(i, i - 1) = -1 - delta;
+        else {
+            B(i, i - 1) = -1 - delta;
+            B(i, i + 1) = -1 + delta;
+        }
+        B(i, i) = 4;
+    }
+    
+    Matrix I(10, 10, 0);
+    for (int i = 0; i < 10; ++i)
+        I(i, i) = 1;
+    Matrix Z(10, 10, 0);
+    
+    Matrix *A = nullptr;
+    for (int i = 0; i < m; ++i){
+        Matrix *R = nullptr;
+        if (i == 0)
+            R = new Matrix(B);
+        else if (i == 1)
+            R = new Matrix(-I);
+        else
+            R = new Matrix(Z);
+
+        for (int j = 1; j < m; ++j){
+            Matrix M;
+            if (i == j)
+                M = B;
+            else if (j == i + 1 || j == i - 1)
+                M = -I;
+            else
+                M = Z;
+            Matrix temp = concat(*R, M, 1);
+            delete R;
+            R = new Matrix(temp);
+        }
+
+        if (i == 0)
+            A = new Matrix(*R);  // 深拷贝，防止解引用A时将R删除掉
+        else{
+            Matrix temp = concat(*A, *R, 0);
+            delete A;
+            A = new Matrix(temp);
+        }
+    }
+
+    Matrix f((*A).rows, 1, 1);
+    Matrix d = *A * f;
+
+    IterationSolver solver(*A, d, 10000, 1e-3);
+    Matrix x = solver.ArnoldiSolve();
 }
