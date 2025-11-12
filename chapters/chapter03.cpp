@@ -92,6 +92,30 @@ Matrix IterationSolver::ConjugateGradientSolve(){
     return x;
 }
 
+ArnoldResult IterationSolver::ArnoldiProcess(const Matrix& r, int m){
+    Matrix H(m + 1, m, 0);
+    Matrix* v = new Matrix[m + 1];
+    
+    v[0] = r / norm(r);  // 初始化v0
+
+    // 构造上海森伯格矩阵Hm
+    for (int j = 0; j < m; ++j){
+        for (int i = 0; i <= j; ++i)
+            H(i, j) = (v[i].transpose() * A * v[j])(0, 0);
+        
+        if (j < m){
+            v[j + 1] = A * v[j];
+            for (int k = 0; k <= j; ++k)
+                v[j + 1] = v[j + 1] - H(k, j) * v[k];
+
+            H(j + 1, j) = norm(v[j + 1]);
+            v[j + 1] = v[j + 1] / H(j + 1, j);
+        }
+    }
+    ArnoldResult result(v, H);
+    return result;
+}
+
 Matrix IterationSolver::ArnoldiSolve(int m){
     if (m > A.rows)
         m = A.rows / 2;
@@ -103,26 +127,17 @@ Matrix IterationSolver::ArnoldiSolve(int m){
     
     int step = 1;
     while (norm(r) > epsilon){
+        ArnoldResult ar_result = ArnoldiProcess(r, m);
+
+        Matrix* v = new Matrix[m];
+        std::copy_n(ar_result.v, m, v);
         Matrix H(m, m, 0);
-        Matrix v[m];
+        for (int i = 0; i < m; ++i)
+            for (int j = 0; j < m; ++j)
+                H(i, j) = ar_result.H(i, j);
+
         Matrix beta(m, 1, 0);
         beta(0, 0) = norm(r);
-        v[0] = r / norm(r);  // 初始化v0
-
-        // 构造上海森伯格矩阵Hm
-        for (int j = 0; j < m; ++j){
-            for (int i = 0; i <= j; ++i)
-                H(i, j) = (v[i].transpose() * A * v[j])(0, 0);
-            
-            if (j < m - 1){
-                v[j + 1] = A * v[j];
-                for (int k = 0; k <= j; ++k)
-                    v[j + 1] = v[j + 1] - H(k, j) * v[k];
-
-                H(j + 1, j) = norm(v[j + 1]);
-                v[j + 1] = v[j + 1] / H(j + 1, j);
-            }
-        }
 
         // 利用列主元高斯消去法求解Hy=beta
         luResult result = DoolittleSolver::luDecompose(H, true);
@@ -144,10 +159,45 @@ Matrix IterationSolver::ArnoldiSolve(int m){
 
         std::cout << "第" << step << "步残差为" << norm(r) << std::endl;
         step += 1;
+        delete[] v;  // 释放v的内存
     }
     return x;
 }
 
+Matrix IterationSolver::GMRESSolve(int m){
+    if (m > A.rows)
+        m = A.rows / 2;
+
+    Matrix x = generateRandomMatrix(A.cols, 1, -1, 1);
+    Matrix r = b - A * x;
+    std::cout << "循环型广义极小残余(GMRES)算法开始！矩阵维度为: " << A.rows <<std::endl;
+    std::cout << "初始残差为" << norm(r) << std::endl;
+
+    int step = 1;
+    while (norm(r) > epsilon){
+        ArnoldResult ar_result = ArnoldiProcess(r, m);
+
+        Matrix beta(m + 1, 1, 0);
+        beta(0, 0) = norm(r);
+
+        // 此处求解min||beta e1 - Hm y||的方式可以改进
+        Matrix y = (ar_result.H.transpose() * ar_result.H).inv() * 
+        ar_result.H.transpose() * beta;
+
+        Matrix V(A.rows, m, 0);
+        for (int i = 0; i < V.rows; ++i)
+            for (int j = 0; j < V.cols; ++j)
+                V(i, j) = ar_result.v[j](i, 0);
+        Matrix z = V * y;
+
+        x = x + z;
+        r = b - A * x;
+
+        std::cout << "第" << step << "步残差为" << norm(r) << std::endl;
+        step += 1;
+    }
+    return x;
+}
 
 void Chapter03Demos::Demo1(){
     Matrix A = {
@@ -241,4 +291,20 @@ void Chapter03Demos::Demo3(int m){
 
     IterationSolver solver(*A, d, 10000, 1e-3);
     Matrix x = solver.ArnoldiSolve();
+}
+
+void Chapter03Demos::Demo31(int m){
+    Matrix A1 = generatePositiveDefiniteMatrix(m);
+    Matrix A2_ = generateRandomMatrix(m, m);
+    Matrix A2 = A2_ * A2_; // 保证与A1数值大小类似
+    Matrix b = generateRandomMatrix(m, 1, -10, 10);
+
+    std::cout << "对基于伽辽金原理的大型数组迭代解法进行测试，A为随机对称正定矩阵，b为[-10,10]随机矩阵：" << std::endl;
+    IterationSolver solver1(A1, b, 10000, 1e-3);
+    // 共轭梯度法
+    Matrix x0 = solver1.ConjugateGradientSolve();
+    // 循环型阿诺尔迪算法
+    Matrix x1 = solver1.ArnoldiSolve();
+    // 循环型广义极小残余算法
+    Matrix x2 = solver1.GMRESSolve();
 }

@@ -6,7 +6,6 @@
 
 int main(){
     SetConsoleOutputCP(CP_UTF8);  // 强制控制台使用utf-8编码
-    Chapter03Demos::Demo3(10);
-    Chapter03Demos::Demo3(20);
+    Chapter03Demos::Demo31(1000);
     return 0;
 }
