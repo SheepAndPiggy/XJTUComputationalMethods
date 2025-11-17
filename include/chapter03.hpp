@@ -26,6 +26,9 @@ class IterationSolver{
     // 共轭梯度法
     Matrix ConjugateGradientSolve();
 
+    // 梯度下降法
+    Matrix GradientSolve();
+
     // 阿诺尔迪过程
     ArnoldResult ArnoldiProcess(const Matrix& r, int m);
     // 阿诺尔迪迭代法(循环型)

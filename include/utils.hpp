@@ -7,13 +7,6 @@
 #include <cmath>
 #include <algorithm>
 
-struct Node{
-    int value;
-    Node* link;
-    Node* insert(int pos, int value);
-    void print();
-};
-
 class Matrix{    
     public:
     size_t rows;  // 行数

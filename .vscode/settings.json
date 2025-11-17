@@ -48,7 +48,14 @@
     "functional": "cpp",
     "iterator": "cpp",
     "numeric": "cpp",
-    "random": "cpp"
+    "random": "cpp",
+    "condition_variable": "cpp",
+    "forward_list": "cpp",
+    "unordered_set": "cpp",
+    "mutex": "cpp",
+    "thread": "cpp",
+    "cinttypes": "cpp",
+    "typeindex": "cpp"
   },
   "C_Cpp.default.compilerPath": "D:\\Program Files\\mingw64\\bin\\g++.exe",
   "C_Cpp.default.includePath": [

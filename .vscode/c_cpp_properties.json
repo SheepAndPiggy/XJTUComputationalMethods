@@ -1,0 +1,17 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "C:/Users/dan/AppData/Local/Programs/Python/Python313/Lib/site-packages/pybind11/include",
+                "C:/Users/dan/AppData/Local/Programs/Python/Python313/include" 
+            ],
+            "defines": [],
+            "compilerPath": "g++",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        }
+    ],
+    "version": 4
+}

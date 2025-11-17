@@ -8,44 +8,6 @@
 
 #include "utils.hpp"
 
-/* 单向链表 */
-Node* head = nullptr;  // 定义链表头部
-
-Node* Node::insert(int pos, int value){
-    Node* temp1 = new Node();
-    temp1->value = value;
-    temp1->link = nullptr;
-    if (pos == 1){
-        temp1->link = head;
-        head = temp1;  // 修改头部指针
-        return temp1;
-    }
-
-    Node* temp2 = head;
-    for (int i=0; i<pos-2; i++){
-        if (temp2 == nullptr){  // 如果遍历至链表最后一个节点则退出循环
-            std::cerr << "Error: position out of bounds." << std::endl;
-            return nullptr;
-        }
-        temp2 = temp2->link;
-    }
-    temp1->link = temp2->link;
-    temp2->link = temp1;
-    return temp1;
-}
-
-void Node::print(){
-    Node* temp = head;
-    while (temp != nullptr){
-        if (temp != head)
-            std::cout << ",";
-        std::cout << temp->value;
-        temp = temp->link;
-    }
-    std::cout << std::endl;
-}
-
-
 /* 矩阵（一维vector模拟二维矩阵） */
 Matrix::Matrix(): rows(-1), cols(-1), data(std::vector<double>()){}
 
@@ -106,7 +68,7 @@ Matrix Matrix::operator- (const Matrix& other) const{
 }
 
 Matrix Matrix::operator-() const{
-    Matrix result(cols, rows);
+    Matrix result(rows, cols);
     for (int i = 0; i < data.size(); ++i)
         result.data[i] = -this->data[i];
     return result;
