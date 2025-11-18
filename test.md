@@ -1,22 +1,11 @@
-```c++
-Matrix IterationSolver::GradientSolve(){
-    Matrix x = generateRandomMatrix(A.cols, 1, -1, 1);
-    
-    Matrix gradient = A * x - b;
-    Matrix r = b - A * x;
+```shell
+维度为5的共轭梯度法过程共用8步, 残差||Ax-b||/||x||为4.22128e-12
+k次多项式拟合结果
+5.12345, 5.30555, 5.56885, 5.93733, 6.43733, 7.09757, 7.94915, 9.02555, 10.3626,
+误差为：0.000574429
 
-    for (int i = 0; i < max_iter; ++i){
-        double final_error = this->residualNormError(x) / norm(x);
-        if (final_error < epsilon){
-            std::cout << "维度为" << A.cols << "的梯度下降法过程共用" << i + 1 << "步, "
-             << "残差||Ax-b||/||x||为" << final_error << std::endl;
-            break;
-        }
-        double alpha = (r.transpose() * r)(0, 0) / (r.transpose() * A * r)(0, 0);
-        x = x - alpha * gradient;
-        gradient = A * x - b;
-        r = b - A * x;
-    }
-    return x;
-}
+维度为5的共轭梯度法过程共用6步, 残差||Ax-b||/||x||为5.80521e-14
+勒让德多项式拟合结果
+5.12345, 5.30555, 5.56885, 5.93733, 6.43733, 7.09757, 7.94915, 9.02555, 10.3626, 
+误差为：0.000574429
 ```
